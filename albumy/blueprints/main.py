@@ -14,7 +14,7 @@ from sqlalchemy.sql.expression import func
 
 from albumy.decorators import confirm_required, permission_required
 from albumy.extensions import db
-from albumy.forms.main import DescriptionForm, TagForm, CommentForm
+from albumy.forms.main import DescriptionForm, TagForm, CommentForm, PhotoForm
 from albumy.models import User, Photo, Tag, Follow, Collect, Comment, Notification
 from albumy.notifications import push_comment_notification, push_collect_notification
 from albumy.utils import rename_image, resize_image, redirect_back, flash_errors
@@ -45,7 +45,7 @@ def explore():
     photos = Photo.query.order_by(func.random()).limit(12)
     return render_template('main/explore.html', photos=photos)
 
-
+'''
 @main_bp.route('/search')
 def search():
     q = request.args.get('q', '').strip()
@@ -64,7 +64,7 @@ def search():
         pagination = Photo.query.whooshee_search(q).paginate(page, per_page)
     results = pagination.items
     return render_template('main/search.html', q=q, results=results, pagination=pagination, category=category)
-
+'''
 
 @main_bp.route('/notifications')
 @login_required
@@ -113,6 +113,7 @@ def get_image(filename):
 def get_avatar(filename):
     return send_from_directory(current_app.config['AVATARS_SAVE_PATH'], filename)
 
+'''
 
 @main_bp.route('/upload', methods=['GET', 'POST'])
 @login_required
@@ -134,6 +135,28 @@ def upload():
         db.session.add(photo)
         db.session.commit()
     return render_template('main/upload.html')
+'''
+
+@main_bp.route('/upload2', methods=['GET', 'POST'])
+@login_required
+@confirm_required
+@permission_required('UPLOAD')
+def upload2():
+    form = PhotoForm()
+    if form.validate_on_submit():
+        filename_s = form.url_s.data
+        filename_m = form.url_m.data
+        filename = form.url_l.data
+
+        photo = Photo(
+            filename=filename,
+            filename_s=filename_s,
+            filename_m=filename_m,
+            author=current_user._get_current_object()
+        )
+        db.session.add(photo)
+        db.session.commit()
+    return render_template('main/upload2.html', form=form)
 
 
 @main_bp.route('/photo/<int:photo_id>')

@@ -21,7 +21,7 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.explore'))
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -32,7 +32,7 @@ def login():
                 return redirect_back()
             else:
                 flash('Your account is blocked.', 'warning')
-                return redirect(url_for('main.index'))
+                return redirect(url_for('main.explore'))
         flash('Invalid email or password.', 'warning')
     return render_template('auth/login.html', form=form)
 
@@ -41,7 +41,7 @@ def login():
 @login_required
 def re_authenticate():
     if login_fresh():
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.explore'))
 
     form = LoginForm()
     if form.validate_on_submit() and current_user.validate_password(form.password.data):
@@ -61,7 +61,7 @@ def logout():
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.explore'))
 
     form = RegisterForm()
     if form.validate_on_submit():
@@ -84,11 +84,11 @@ def register():
 @login_required
 def confirm(token):
     if current_user.confirmed:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.explore'))
 
     if validate_token(user=current_user, token=token, operation=Operations.CONFIRM):
         flash('Account confirmed.', 'success')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.explore'))
     else:
         flash('Invalid or expired token.', 'danger')
         return redirect(url_for('.resend_confirm_email'))
@@ -98,18 +98,18 @@ def confirm(token):
 @login_required
 def resend_confirm_email():
     if current_user.confirmed:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.explore'))
 
     token = generate_token(user=current_user, operation=Operations.CONFIRM)
     send_confirm_email(user=current_user, token=token)
     flash('New email sent, check your inbox.', 'info')
-    return redirect(url_for('main.index'))
+    return redirect(url_for('main.explore'))
 
 
 @auth_bp.route('/forget-password', methods=['GET', 'POST'])
 def forget_password():
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.explore'))
 
     form = ForgetPasswordForm()
     if form.validate_on_submit():
@@ -127,13 +127,13 @@ def forget_password():
 @auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.explore'))
 
     form = ResetPasswordForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data.lower()).first()
         if user is None:
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main.explore'))
         if validate_token(user=user, token=token, operation=Operations.RESET_PASSWORD,
                           new_password=form.password.data):
             flash('Password updated.', 'success')
